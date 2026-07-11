@@ -12,10 +12,7 @@ nunca os deteta nem os esconde.
 ## Capturas
 
 <!-- TODO: screenshot do painel de filtros aberto -->
-![Screenshot do YT Filter](docs/screenshot.png)
-
-<!-- TODO: gif a demonstrar o botão arrastável e os filtros em ação -->
-![Demonstração do YT Filter](docs/demo.gif)
+![Screenshot do YT Filter](docs/screenshot_live.png)
 
 ## Funcionalidades
 
