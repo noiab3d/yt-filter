@@ -10,7 +10,8 @@
     "build:watch": "node build.js --watch",
     "dev:firefox": "web-ext run --source-dir dist/firefox --firefox-profile yt-filter-dev --profile-create-if-missing --keep-profile-changes",
     "lint:web-ext": "web-ext lint --source-dir dist/firefox",
-    "test:selectors": "node tests/selector-check.js"
+    "test:selectors": "node tests/selector-check.js",
+    "test:selectors:login": "node tests/selector-check.js --login"
   },
   "dependencies": {
     "webextension-polyfill": "^0.12.0"
