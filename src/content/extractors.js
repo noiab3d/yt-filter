@@ -81,6 +81,9 @@ export function parseRelativeDateText(text, now = new Date()) {
   return new Date(now.getTime() - amount * ms);
 }
 
+// Mixes/playlists e outros cartões não-vídeo não têm esta linha (não há um único
+// "views + idade" para uma coleção de vídeos) — usado por extractVideoData() para
+// distinguir um vídeo normal de outro tipo de cartão, sem avisar.
 function getMetadataTexts(videoEl) {
   const rows = videoEl.querySelectorAll(VIDEO_METADATA_ROW);
   for (const row of rows) {
@@ -93,19 +96,13 @@ function getMetadataTexts(videoEl) {
 
 export function getViews(videoEl) {
   const texts = getMetadataTexts(videoEl);
-  if (!texts) {
-    warn('Não encontrou a linha de views/idade. Seletor pode ter partido.', videoEl);
-    return null;
-  }
+  if (!texts) return null;
   return parseViewsText(texts[0]);
 }
 
 export function getPublishedAt(videoEl) {
   const texts = getMetadataTexts(videoEl);
-  if (!texts || texts.length < 2) {
-    warn('Não encontrou a linha de views/idade. Seletor pode ter partido.', videoEl);
-    return null;
-  }
+  if (!texts || texts.length < 2) return null;
   return parseRelativeDateText(texts[1]);
 }
 
@@ -116,7 +113,13 @@ export function isShort() {
   return false;
 }
 
+// Devolve null quando o item não parece ser um vídeo normal (Mix/playlist, anúncio,
+// etc. — reconhecido pela ausência da linha de views/idade) — o resto do pipeline
+// (filters.js, observer.js) ignora esses itens por completo e nunca lhes mexe.
+// A extensão não é um bloqueador de anúncios.
 export function extractVideoData(videoEl) {
+  if (!getMetadataTexts(videoEl)) return null;
+
   return {
     id: getVideoId(videoEl),
     title: getTitle(videoEl),
