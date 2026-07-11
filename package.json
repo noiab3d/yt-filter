@@ -1,0 +1,21 @@
+{
+  "name": "yt-filter",
+  "version": "0.1.0",
+  "description": "Extensão de browser que filtra a homepage de recomendações do YouTube (idade, duração, views, Shorts).",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "build:watch": "node build.js --watch",
+    "dev:firefox": "web-ext run --source-dir dist/firefox",
+    "lint:web-ext": "web-ext lint --source-dir dist/firefox"
+  },
+  "dependencies": {
+    "webextension-polyfill": "^0.12.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "web-ext": "^8.3.0"
+  }
+}
