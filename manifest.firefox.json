@@ -17,6 +17,14 @@
   "host_permissions": [
     "*://www.youtube.com/*"
   ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "YT Filter"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
   "content_scripts": [
     {
       "matches": ["*://www.youtube.com/*"],

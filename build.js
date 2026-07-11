@@ -13,12 +13,23 @@ async function buildTarget(target) {
   cpSync(`manifest.${target}.json`, `${outdir}/manifest.json`);
   cpSync('icons', `${outdir}/icons`, { recursive: true });
 
+  cpSync('src/popup/popup.html', `${outdir}/popup.html`);
+  cpSync('src/popup/popup.css', `${outdir}/popup.css`);
+  cpSync('src/options/options.html', `${outdir}/options.html`);
+  cpSync('src/options/options.css', `${outdir}/options.css`);
+  cpSync('src/shared/filterPanel.css', `${outdir}/filterPanel.css`);
+
   const buildOptions = {
-    entryPoints: [{ in: 'src/content/index.js', out: 'content' }],
+    entryPoints: [
+      { in: 'src/content/index.js', out: 'content' },
+      { in: 'src/popup/popup.js', out: 'popup' },
+      { in: 'src/options/options.js', out: 'options' },
+    ],
     outdir,
     bundle: true,
     format: 'iife',
     target: 'es2020',
+    loader: { '.css': 'text' },
     logLevel: 'info',
   };
 

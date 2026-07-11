@@ -5,7 +5,12 @@ import {
   VIDEO_METADATA_ROW,
   VIDEO_METADATA_TEXT,
   VIDEO_METADATA_DELIMITER,
-  SHORTS_INDICATOR,
+  SHORTS_LOCKUP,
+  SHORTS_LINK,
+  SHORTS_TITLE_HEADING,
+  SHORTS_VIEWS_TEXT,
+  COLLECTION_THUMBNAIL,
+  LIVE_BADGE,
 } from './selectors.js';
 
 function warn(message, el) {
@@ -67,18 +72,32 @@ export function parseViewsText(text) {
   return Math.round(value * factor);
 }
 
-// Formatos observados: "há 1 ano", "há 3 dias". Aproximado — o YouTube só dá texto relativo.
+// "mês" pluraliza de forma irregular ("meses", não "mêss"/"mess") — todas as outras
+// unidades seguem o padrão regular (+s). Cada padrão aqui testa a palavra completa
+// já isolada do número, depois de extraída pelo regex principal.
+const UNIT_PATTERNS = {
+  segundo: /^segundos?$/,
+  minuto: /^minutos?$/,
+  hora: /^horas?$/,
+  dia: /^dias?$/,
+  semana: /^semanas?$/,
+  mês: /^m[êe]s(es)?$/,
+  ano: /^anos?$/,
+};
+
+// Formatos observados: "há 1 ano", "há 3 dias", "há 9 meses". Aproximado — o YouTube
+// só dá texto relativo.
 export function parseRelativeDateText(text, now = new Date()) {
   const normalized = text.trim().toLowerCase();
-  const match = normalized.match(/^há (\d+)\s+(segundo|minuto|hora|dia|semana|mês|mes|ano)s?$/);
+  const match = normalized.match(/^há (\d+)\s+(.+)$/);
   if (!match) return null;
 
   const amount = Number(match[1]);
-  const unit = match[2] === 'mes' ? 'mês' : match[2];
-  const ms = MS_PER_UNIT[unit];
-  if (!ms) return null;
+  const unitText = match[2];
+  const unit = Object.keys(UNIT_PATTERNS).find((key) => UNIT_PATTERNS[key].test(unitText));
+  if (!unit) return null;
 
-  return new Date(now.getTime() - amount * ms);
+  return new Date(now.getTime() - amount * MS_PER_UNIT[unit]);
 }
 
 // Mixes/playlists e outros cartões não-vídeo não têm esta linha (não há um único
@@ -106,18 +125,81 @@ export function getPublishedAt(videoEl) {
   return parseRelativeDateText(texts[1]);
 }
 
-// TODO: sem HTML real de um item Shorts para confirmar a estrutura, nunca assumir que
-// um vídeo é Short — mostrar é sempre mais seguro do que esconder por engano.
-export function isShort() {
-  if (SHORTS_INDICATOR === null) return false;
-  return false;
+export function isShort(videoEl) {
+  return videoEl.querySelector(SHORTS_LOCKUP) !== null;
 }
 
-// Devolve null quando o item não parece ser um vídeo normal (Mix/playlist, anúncio,
-// etc. — reconhecido pela ausência da linha de views/idade) — o resto do pipeline
-// (filters.js, observer.js) ignora esses itens por completo e nunca lhes mexe.
-// A extensão não é um bloqueador de anúncios.
+// Os Shorts usam um componente completamente diferente do vídeo normal — sem badge de
+// duração nem linha de idade, só título, link /shorts/ID e views.
+function extractShortData(videoEl) {
+  const link = videoEl.querySelector(SHORTS_LINK);
+  const id = link?.getAttribute('href')?.match(/\/shorts\/([^/?]+)/)?.[1] ?? null;
+
+  const titleEl = videoEl.querySelector(SHORTS_TITLE_HEADING);
+  const title = titleEl ? (titleEl.getAttribute('title')?.trim() ?? titleEl.textContent.trim()) : null;
+
+  const viewsEl = videoEl.querySelector(SHORTS_VIEWS_TEXT);
+  const views = viewsEl ? parseViewsText(viewsEl.textContent) : null;
+
+  return {
+    id,
+    title,
+    durationSeconds: null, // não mostrado na prateleira de Shorts da homepage
+    views,
+    publishedAt: null, // idem
+    isShort: true,
+    isCollection: false,
+    isLive: false,
+  };
+}
+
+export function isCollection(videoEl) {
+  return videoEl.querySelector(COLLECTION_THUMBNAIL) !== null;
+}
+
+export function isLive(videoEl) {
+  return videoEl.querySelector(LIVE_BADGE) !== null;
+}
+
+// Mixes e playlists partilham o mesmo link/título do vídeo normal (yt-lockup-view-model),
+// só o thumbnail é que é o componente "collection" — não mostram duração nem views/idade
+// fiáveis (mostram nº de episódios, "Atualizada hoje", lista de artistas, etc.).
+function extractCollectionData(videoEl) {
+  return {
+    id: getVideoId(videoEl),
+    title: getTitle(videoEl),
+    durationSeconds: null,
+    views: null,
+    publishedAt: null,
+    isShort: false,
+    isCollection: true,
+    isLive: false,
+  };
+}
+
+// Lives não têm duração (estão a decorrer) nem uma data relativa fiável (mostram
+// "X a ver" em vez de views/idade).
+function extractLiveData(videoEl) {
+  return {
+    id: getVideoId(videoEl),
+    title: getTitle(videoEl),
+    durationSeconds: null,
+    views: null,
+    publishedAt: null,
+    isShort: false,
+    isCollection: false,
+    isLive: true,
+  };
+}
+
+// Devolve null quando o item não parece ser um vídeo, Short, Mix/playlist nem live
+// (anúncio ou outro tipo de cartão desconhecido — reconhecido pela ausência da linha
+// de views/idade) — o resto do pipeline (filters.js, observer.js) ignora esses itens
+// por completo e nunca lhes mexe. A extensão não é um bloqueador de anúncios.
 export function extractVideoData(videoEl) {
+  if (isShort(videoEl)) return extractShortData(videoEl);
+  if (isCollection(videoEl)) return extractCollectionData(videoEl);
+  if (isLive(videoEl)) return extractLiveData(videoEl);
   if (!getMetadataTexts(videoEl)) return null;
 
   return {
@@ -126,6 +208,8 @@ export function extractVideoData(videoEl) {
     durationSeconds: getDurationSeconds(videoEl),
     views: getViews(videoEl),
     publishedAt: getPublishedAt(videoEl),
-    isShort: isShort(videoEl),
+    isShort: false,
+    isCollection: false,
+    isLive: false,
   };
 }

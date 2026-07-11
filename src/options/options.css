@@ -1,0 +1,34 @@
+body {
+  margin: 0;
+  background: var(--ytf-bg, #0f0f0f);
+  color: #f1f1f1;
+  font-family: 'Roboto', Arial, Helvetica, sans-serif;
+}
+
+.ytf-options-page {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 32px 20px 60px;
+}
+
+.ytf-options-page h1 {
+  font-size: 20px;
+  margin: 0 0 8px;
+}
+
+.ytf-options-intro {
+  color: #aaaaaa;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+
+@media (prefers-color-scheme: light) {
+  body {
+    color: #0f0f0f;
+  }
+
+  .ytf-options-intro {
+    color: #606060;
+  }
+}
