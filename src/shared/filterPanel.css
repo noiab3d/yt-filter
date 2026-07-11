@@ -1,0 +1,353 @@
+.ytf-panel {
+  --ytf-bg: rgba(15, 15, 15, 0.82);
+  --ytf-surface: rgba(255, 255, 255, 0.05);
+  --ytf-border: #303030;
+  --ytf-text: #f1f1f1;
+  --ytf-text-muted: #aaaaaa;
+  --ytf-accent: #3ea6ff;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--ytf-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: var(--ytf-text);
+  font-family: 'Roboto', Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  padding: 12px;
+  box-sizing: border-box;
+  border-radius: 10px;
+}
+
+@media (prefers-color-scheme: light) {
+  .ytf-panel {
+    --ytf-bg: rgba(255, 255, 255, 0.82);
+    --ytf-surface: rgba(0, 0, 0, 0.03);
+    --ytf-border: #e0e0e0;
+    --ytf-text: #0f0f0f;
+    --ytf-text-muted: #606060;
+    --ytf-accent: #065fd4;
+  }
+}
+
+.ytf-panel * {
+  box-sizing: border-box;
+}
+
+.ytf-reset-all {
+  background: transparent;
+  color: var(--ytf-text-muted);
+  border: 1px solid var(--ytf-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ytf-reset-all:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ytf-reset-all.is-active {
+  color: #ff6b6b;
+  border-color: rgba(255, 90, 90, 0.5);
+  background: rgba(255, 90, 90, 0.08);
+  box-shadow: 0 0 8px rgba(255, 90, 90, 0.3);
+}
+
+.ytf-reset-all.is-active:hover {
+  background: rgba(255, 90, 90, 0.15);
+}
+
+.ytf-filter {
+  background: var(--ytf-surface);
+  border: 1px solid var(--ytf-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition: border-color 0.15s ease;
+}
+
+.ytf-filter:has(input[type='checkbox']:checked) {
+  border-color: rgba(62, 166, 255, 0.4);
+}
+
+.ytf-filter-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ytf-filter-header input[type='checkbox'],
+.ytf-toggle-row input[type='checkbox'] {
+  appearance: none;
+  width: 32px;
+  height: 18px;
+  border-radius: 999px;
+  background: #4d4d4d;
+  position: relative;
+  flex: none;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+@media (prefers-color-scheme: light) {
+  .ytf-filter-header input[type='checkbox'],
+.ytf-toggle-row input[type='checkbox'] {
+    background: #c6c6c6;
+  }
+}
+
+.ytf-filter-header input[type='checkbox']::after,
+.ytf-toggle-row input[type='checkbox']::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+}
+
+.ytf-filter-header input[type='checkbox']:checked,
+.ytf-toggle-row input[type='checkbox']:checked {
+  background: var(--ytf-accent);
+  box-shadow: 0 0 6px 1px rgba(62, 166, 255, 0.55);
+}
+
+.ytf-filter-header input[type='checkbox']:checked::after,
+.ytf-toggle-row input[type='checkbox']:checked::after {
+  transform: translateX(14px);
+}
+
+.ytf-filter-body {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ytf-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ytf-filter-title {
+  font-weight: 500;
+}
+
+.ytf-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ytf-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.ytf-row span {
+  color: var(--ytf-text-muted);
+  font-size: 12px;
+}
+
+.ytf-row select,
+.ytf-row input[type='number'],
+.ytf-row input[type='text'],
+.ytf-row input[type='date'] {
+  background: var(--ytf-bg);
+  color: var(--ytf-text);
+  border: 1px solid var(--ytf-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  width: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ytf-row select:focus-visible,
+.ytf-row input:focus-visible {
+  outline: none;
+  border-color: var(--ytf-accent);
+  box-shadow: 0 0 0 3px rgba(62, 166, 255, 0.25);
+}
+
+.ytf-hint {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--ytf-text-muted);
+}
+
+/* Chips (grupo de seleção única) */
+
+.ytf-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ytf-chip {
+  background: var(--ytf-bg);
+  color: var(--ytf-text-muted);
+  border: 1px solid var(--ytf-border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.ytf-chip:hover {
+  color: var(--ytf-text);
+  border-color: var(--ytf-accent);
+}
+
+.ytf-chip.is-active {
+  background: rgba(62, 166, 255, 0.15);
+  color: var(--ytf-text);
+  border-color: var(--ytf-accent);
+  box-shadow: 0 0 8px rgba(62, 166, 255, 0.35);
+}
+
+/* Calendário */
+
+.ytf-age-custom {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ytf-calendar {
+  border: 1px solid var(--ytf-border);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.ytf-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.ytf-calendar-label {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.ytf-calendar-nav {
+  background: transparent;
+  color: var(--ytf-text-muted);
+  border: 1px solid var(--ytf-border);
+  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  line-height: 1;
+  cursor: pointer;
+  font-size: 13px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.ytf-calendar-nav:hover {
+  color: var(--ytf-text);
+  border-color: var(--ytf-accent);
+}
+
+.ytf-calendar-weekdays,
+.ytf-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  text-align: center;
+}
+
+.ytf-calendar-weekdays span {
+  font-size: 10px;
+  color: var(--ytf-text-muted);
+  padding: 2px 0;
+}
+
+.ytf-calendar-day {
+  background: transparent;
+  color: var(--ytf-text);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 4px 0;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.ytf-calendar-day:hover {
+  border-color: var(--ytf-accent);
+}
+
+.ytf-calendar-day.is-selected {
+  background: var(--ytf-accent);
+  color: #fff;
+  box-shadow: 0 0 8px rgba(62, 166, 255, 0.5);
+}
+
+/* Slider de views (dois handles) */
+
+.ytf-slider {
+  padding: 8px 4px 0;
+}
+
+.ytf-slider-track {
+  position: relative;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--ytf-border);
+  margin: 14px 8px 0;
+}
+
+.ytf-slider-range {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ytf-accent);
+  box-shadow: 0 0 6px rgba(62, 166, 255, 0.5);
+}
+
+.ytf-slider-handle {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--ytf-accent);
+  transform: translateY(-50%);
+  cursor: grab;
+  padding: 0;
+  box-shadow: 0 0 6px rgba(62, 166, 255, 0.45);
+}
+
+.ytf-slider-handle:active {
+  cursor: grabbing;
+}
+
+.ytf-slider-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--ytf-text-muted);
+}

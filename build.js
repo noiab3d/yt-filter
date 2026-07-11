@@ -14,11 +14,14 @@ async function buildTarget(target) {
   cpSync('icons', `${outdir}/icons`, { recursive: true });
 
   const buildOptions = {
-    entryPoints: [{ in: 'src/content/index.js', out: 'content' }],
+    entryPoints: [
+      { in: 'src/content/index.js', out: 'content' },
+    ],
     outdir,
     bundle: true,
     format: 'iife',
     target: 'es2020',
+    loader: { '.css': 'text' },
     logLevel: 'info',
   };
 

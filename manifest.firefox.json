@@ -17,6 +17,9 @@
   "host_permissions": [
     "*://www.youtube.com/*"
   ],
+  "action": {
+    "default_title": "YT Filter"
+  },
   "content_scripts": [
     {
       "matches": ["*://www.youtube.com/*"],
