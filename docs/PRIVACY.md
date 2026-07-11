@@ -1,62 +1,60 @@
-# Política de privacidade — YT Filter
+# Privacy Policy — YT Filter
 
-**Resumo: o YT Filter não recolhe, armazena remotamente, nem transmite
-nenhum dado sobre ti ou sobre a tua utilização do YouTube. Zero
-telemetria, zero pedidos de rede além dos que o próprio YouTube já faz.**
+**Summary: YT Filter does not collect, remotely store, or transmit any data
+about you or your YouTube usage. Zero telemetry, zero network requests
+beyond the ones YouTube itself already makes.**
 
-## O que a extensão faz
+## What the extension does
 
-O YT Filter corre inteiramente dentro do teu browser. Quando estás na
-homepage do YouTube, lê os vídeos que **já estão carregados na página**
-(título, duração, views, idade relativa, tipo de cartão) e, com base nos
-filtros que tu ativaste, esconde (`display: none`) os que não cumprem
-esses critérios. Não interage com o algoritmo de recomendação do
-YouTube, não bloqueia anúncios, e não modifica nenhum outro
-comportamento da página.
+YT Filter runs entirely inside your browser. When you're on the YouTube
+homepage, it reads the videos that are **already loaded on the page**
+(title, duration, views, relative age, card type) and, based on the
+filters you've turned on, hides (`display: none`) the ones that don't
+match. It doesn't interact with YouTube's recommendation algorithm,
+doesn't block ads, and doesn't modify any other behavior of the page.
 
-## Que dados são recolhidos
+## What data is collected
 
-Nenhum. Especificamente:
+None. Specifically:
 
-- **Não há telemetria.** A extensão não contacta nenhum servidor,
-  próprio ou de terceiros.
-- **Não há analytics nem tracking** de qualquer tipo (Google Analytics,
-  Sentry, etc.).
-- **Não há contas nem login.** Nada é associado à tua identidade.
-- **Não é enviado nada para fora do teu browser.** Os únicos pedidos de
-  rede que acontecem são os que o próprio YouTube faz normalmente para
-  carregar a página — a extensão não adiciona nenhum.
+- **No telemetry.** The extension doesn't contact any server, first-party
+  or third-party.
+- **No analytics or tracking** of any kind (Google Analytics, Sentry,
+  etc.).
+- **No accounts or login.** Nothing is tied to your identity.
+- **Nothing is sent outside your browser.** The only network requests that
+  happen are the ones YouTube itself normally makes to load the page — the
+  extension doesn't add any.
 
-## Que dados são guardados localmente
+## What data is stored locally
 
-Os teus filtros (idade, duração, views, Shorts, etc.) e a posição do
-botão flutuante são guardados apenas no teu computador, através da API
-`browser.storage.local` do próprio browser — o equivalente a uma
-preferência local, como o zoom de uma página. Esses dados:
+Your filters (age, duration, views, Shorts, etc.) and the floating
+button's position are stored only on your computer, through the browser's
+own `browser.storage.local` API — the equivalent of a local preference,
+like a page's zoom level. This data:
 
-- Nunca saem do teu dispositivo.
-- Não são sincronizados com nenhum servidor.
-- São apagados automaticamente se desinstalares a extensão.
+- Never leaves your device.
+- Is never synced to any server.
+- Is automatically deleted if you uninstall the extension.
 
-## Permissões pedidas e porquê
+## Permissions requested, and why
 
-- **`storage`** — para guardar os teus filtros e a posição do botão
-  localmente, como descrito acima.
-- **Acesso a `www.youtube.com`** — para o content script poder ler os
-  vídeos da homepage e esconder os que não cumprem os filtros. A
-  extensão não pede acesso a nenhum outro site.
+- **`storage`** — to store your filters and the button's position locally,
+  as described above.
+- **Access to `www.youtube.com`** — so the content script can read the
+  homepage's videos and hide the ones that don't match your filters. The
+  extension doesn't request access to any other site.
 
-Não é pedida nenhuma permissão de rede, histórico de navegação, cookies,
-ou acesso a outras abas.
+No network, browsing history, cookies, or other-tabs permissions are
+requested.
 
-## Código aberto
+## Open source
 
-O código-fonte completo está disponível em
-[github.com/noiab3d/yt-filter](https://github.com/noiab3d/yt-filter)
-sob licença MIT — qualquer pessoa pode inspecionar exatamente o que a
-extensão faz.
+The full source code is available at
+[github.com/noiab3d/yt-filter](https://github.com/noiab3d/yt-filter) under
+the MIT license — anyone can inspect exactly what the extension does.
 
-## Contacto
+## Contact
 
-Dúvidas ou preocupações sobre privacidade podem ser colocadas como
-[issue no GitHub](https://github.com/noiab3d/yt-filter/issues).
+Privacy questions or concerns can be raised as an
+[issue on GitHub](https://github.com/noiab3d/yt-filter/issues).
