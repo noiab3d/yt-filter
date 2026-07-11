@@ -1,6 +1,6 @@
 import { getFilters, setFilters, onFiltersChanged } from './storage.js';
 import { DEFAULT_FILTERS } from './defaults.js';
-import { strings } from '../locales/pt.js';
+import { strings } from '../locales/index.js';
 
 // Único sítio que sabe montar o HTML do painel a partir do dicionário de
 // strings — trocar de idioma no futuro não deve exigir tocar aqui, só no

@@ -1,7 +1,7 @@
 import { CHIP_BAR, VIDEO_GRID_CONTAINER } from './selectors.js';
 import { mountFilterPanel } from '../shared/filterPanel.js';
 import { getInstalledAt, getButtonPosition, setButtonPosition } from '../shared/storage.js';
-import { strings } from '../locales/pt.js';
+import { strings } from '../locales/index.js';
 import filterPanelStyles from '../shared/filterPanel.css';
 
 const HOST_ID = 'ytf-inpage-host';

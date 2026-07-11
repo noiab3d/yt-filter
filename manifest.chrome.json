@@ -3,14 +3,6 @@
   "name": "YT Filter",
   "version": "0.1.0",
   "description": "Filtra a homepage de recomendações do YouTube por idade, duração, views e Shorts.",
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "yt-filter@david",
-      "data_collection_permissions": {
-        "required": ["none"]
-      }
-    }
-  },
   "permissions": [
     "storage"
   ],
