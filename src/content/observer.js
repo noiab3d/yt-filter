@@ -28,21 +28,9 @@ function getOrExtractVideoData(videoEl) {
   return videoData;
 }
 
-const RETRY_DELAY_MS = 1000;
-// Uma tentativa extra por elemento chega — se ainda falhar depois de 1s, é
-// mesmo um anúncio ou outro cartão desconhecido (extractVideoData() devolve
-// null de propósito para esses, não é um erro de timing).
-const retriedElements = new WeakSet();
-
 function applyFilter(videoEl) {
   const videoData = getOrExtractVideoData(videoEl);
-  if (!videoData) {
-    if (!retriedElements.has(videoEl)) {
-      retriedElements.add(videoEl);
-      setTimeout(() => applyFilter(videoEl), RETRY_DELAY_MS);
-    }
-    return; // Mix/live ainda a renderizar, anúncio, ou outro cartão desconhecido — nunca mexer.
-  }
+  if (!videoData) return; // Mix/live ainda a renderizar, anúncio, ou outro cartão desconhecido — nunca mexer.
 
   const hide = shouldHide(videoData, currentFilters);
   videoEl.style.display = hide ? 'none' : '';
@@ -62,6 +50,19 @@ function handleAddedNode(node) {
 
   if (node.matches(VIDEO_ITEM)) applyFilter(node);
   node.querySelectorAll(VIDEO_ITEM).forEach(applyFilter);
+
+  // O badge de Mix/Live ou a linha de views/idade podem aparecer mais tarde,
+  // dentro de um vídeo já processado (o YouTube renderiza-os de forma
+  // assíncrona, à parte da inserção do próprio cartão — mais lento em browsers
+  // como o Brave, com bloqueio de anúncios/trackers a atrasar os pedidos do
+  // YouTube). Como já vigiamos toda a subtree da grid, qualquer coisa nova
+  // aqui dentro passa por handleAddedNode — reage-se procurando o cartão-pai
+  // mais próximo e reaplicando o filtro, em vez de adivinhar um tempo de
+  // espera fixo. getOrExtractVideoData() não guarda `null` em cache, por isso
+  // isto só volta a fazer trabalho a sério enquanto o cartão continuar sem
+  // dados; uma vez extraído com sucesso, chamadas seguintes são baratas.
+  const parentItem = node.closest?.(VIDEO_ITEM);
+  if (parentItem && parentItem !== node) applyFilter(parentItem);
 
   if (node.matches(SHORTS_SHELF)) applyShelfFilter(node);
   node.querySelectorAll(SHORTS_SHELF).forEach(applyShelfFilter);
