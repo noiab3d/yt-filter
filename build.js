@@ -2,8 +2,7 @@ import * as esbuild from 'esbuild';
 import { cpSync, mkdirSync, rmSync } from 'node:fs';
 
 const watch = process.argv.includes('--watch');
-// TODO: adicionar 'chrome' quando manifest.chrome.json existir (sessão 6).
-const targets = ['firefox'];
+const targets = ['firefox', 'chrome'];
 
 async function buildTarget(target) {
   const outdir = `dist/${target}`;
