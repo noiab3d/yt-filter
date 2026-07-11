@@ -9,3 +9,6 @@ CLAUDE.md
 # Dumps de HTML da página inteira usados como referência local (podem conter
 # recomendações/dados pessoais) — fixtures pequenos e intencionais vão em tests/fixtures/.
 /*.html
+
+# Perfil local do Firefox usado por "npm run dev:firefox" (login, cookies, histórico).
+/yt-filter-dev/
