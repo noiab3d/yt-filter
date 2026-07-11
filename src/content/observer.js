@@ -13,18 +13,33 @@ let unsubscribeFilters = null;
 // consultas ao DOM) só é preciso uma vez por item, não a cada mudança de filtro.
 const videoDataCache = new WeakMap();
 
-// Nunca guarda `null` em cache: o YouTube por vezes ainda não acabou de
-// renderizar o badge de Mix/Live ou a linha de metadata no instante exato em
-// que o cartão aparece no DOM (assíncrono, separado da inserção do próprio
-// elemento). Se guardássemos esse `null` transitório, o vídeo ficava preso
-// visível para sempre — o código nunca mais tentava reextrair. Sem cache no
-// `null`, a próxima chamada (nova mutação do grid, ou mudança de filtro que
-// corre applyAllFilters) tenta outra vez, e por essa altura o DOM já assentou.
+// Um vídeo normal (não Short/Mix/live) só está "completo" quando tem views E
+// idade — se a linha de metadata existe mas ainda não tinha o texto final no
+// instante da leitura (o YouTube preenche isto por partes, não tudo de uma
+// vez), extractVideoData() não devolve null (tem id/título), só campos a
+// null lá dentro. Isso passava despercebido ao check anterior de "não
+// cachear null" — o objeto inteiro não é null, só um campo dentro dele.
+// Short/Mix/live têm estes campos a null por design (ver extractShortData/
+// extractCollectionData/extractLiveData), por isso não se aplica a eles.
+function isDataComplete(videoData) {
+  if (videoData.isShort || videoData.isCollection || videoData.isLive) return true;
+  return videoData.views != null && videoData.publishedAt != null;
+}
+
+// Nunca guarda dados incompletos em cache (ver isDataComplete): o YouTube por
+// vezes ainda não acabou de preencher o badge de Mix/Live ou o texto de
+// views/idade no instante exato em que o cartão aparece no DOM (assíncrono,
+// separado da inserção do próprio elemento — e por vezes chega via mudança
+// de texto num <span> já existente, não um elemento novo). Se guardássemos
+// isso em cache, o vídeo ficava preso visível para sempre — o código nunca
+// mais tentava reextrair. Sem cache no incompleto, a próxima chamada (nova
+// mutação na subtree do grid, ou mudança de filtro que corre
+// applyAllFilters) tenta outra vez, e por essa altura o DOM já assentou.
 function getOrExtractVideoData(videoEl) {
   const cached = videoDataCache.get(videoEl);
   if (cached) return cached;
   const videoData = extractVideoData(videoEl);
-  if (videoData) videoDataCache.set(videoEl, videoData);
+  if (videoData && isDataComplete(videoData)) videoDataCache.set(videoEl, videoData);
   return videoData;
 }
 
@@ -51,21 +66,23 @@ function handleAddedNode(node) {
   if (node.matches(VIDEO_ITEM)) applyFilter(node);
   node.querySelectorAll(VIDEO_ITEM).forEach(applyFilter);
 
-  // O badge de Mix/Live ou a linha de views/idade podem aparecer mais tarde,
-  // dentro de um vídeo já processado (o YouTube renderiza-os de forma
-  // assíncrona, à parte da inserção do próprio cartão — mais lento em browsers
-  // como o Brave, com bloqueio de anúncios/trackers a atrasar os pedidos do
-  // YouTube). Como já vigiamos toda a subtree da grid, qualquer coisa nova
-  // aqui dentro passa por handleAddedNode — reage-se procurando o cartão-pai
-  // mais próximo e reaplicando o filtro, em vez de adivinhar um tempo de
-  // espera fixo. getOrExtractVideoData() não guarda `null` em cache, por isso
-  // isto só volta a fazer trabalho a sério enquanto o cartão continuar sem
-  // dados; uma vez extraído com sucesso, chamadas seguintes são baratas.
-  const parentItem = node.closest?.(VIDEO_ITEM);
-  if (parentItem && parentItem !== node) applyFilter(parentItem);
-
   if (node.matches(SHORTS_SHELF)) applyShelfFilter(node);
   node.querySelectorAll(SHORTS_SHELF).forEach(applyShelfFilter);
+}
+
+// O YouTube preenche o conteúdo de um cartão (badge de Mix/Live, texto de
+// views/idade) de forma assíncrona e por partes — às vezes via um elemento
+// novo (apanhado por handleAddedNode acima), às vezes só mudando o texto de
+// um <span> que já existia (isso é uma mutação `characterData`, não dispara
+// handleAddedNode, que só reage a nós ELEMENT). Reage-se a QUALQUER mutação
+// perto de um cartão já existente, procurando o ancestral VIDEO_ITEM mais
+// próximo do alvo da mutação e reaplicando o filtro — barato, porque
+// getOrExtractVideoData() só refaz trabalho a sério enquanto os dados desse
+// cartão continuarem incompletos (ver isDataComplete).
+function reapplyNearestItem(node) {
+  const el = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
+  const parentItem = el?.closest?.(VIDEO_ITEM);
+  if (parentItem) applyFilter(parentItem);
 }
 
 // Mudar um filtro esconde/mostra vídeos por toda a grid — em vez de deixar o
@@ -86,11 +103,12 @@ function watchGrid(grid) {
   gridObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       mutation.addedNodes.forEach(handleAddedNode);
+      reapplyNearestItem(mutation.target);
     }
     scheduleNudgeCheck();
   });
 
-  gridObserver.observe(grid, { childList: true, subtree: true });
+  gridObserver.observe(grid, { childList: true, subtree: true, characterData: true });
 }
 
 function waitForGrid() {
