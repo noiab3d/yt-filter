@@ -22,8 +22,6 @@ function passesAgeFilter(videoData, ageFilter) {
         return published <= target;
       case 'after':
         return published >= target;
-      case 'on':
-        return published.toDateString() === target.toDateString();
       default:
         return true;
     }
@@ -45,23 +43,35 @@ function passesAgeFilter(videoData, ageFilter) {
 function passesDurationFilter(videoData, durationFilter) {
   if (!durationFilter?.enabled) return true;
   if (videoData.durationSeconds == null) return true;
+  if (durationFilter.minutes == null) return true;
 
   const minutes = videoData.durationSeconds / 60;
-  if (durationFilter.maxMinutes != null && minutes > durationFilter.maxMinutes) return false;
-  if (durationFilter.minMinutes != null && minutes < durationFilter.minMinutes) return false;
-  return true;
+  if (durationFilter.mode === 'moreThan') return minutes >= durationFilter.minutes;
+  return minutes <= durationFilter.minutes; // 'lessThan'
 }
 
 function passesViewsFilter(videoData, viewsFilter) {
   if (!viewsFilter?.enabled) return true;
   if (videoData.views == null) return true;
-  if (viewsFilter.minViews == null) return true;
-  return videoData.views >= viewsFilter.minViews;
+
+  if (viewsFilter.minViews != null && videoData.views < viewsFilter.minViews) return false;
+  if (viewsFilter.maxViews != null && videoData.views > viewsFilter.maxViews) return false;
+  return true;
 }
 
 function passesShortsFilter(videoData, hideShortsFilter) {
   if (!hideShortsFilter?.enabled) return true;
   return !videoData.isShort;
+}
+
+function passesCollectionsFilter(videoData, hideCollectionsFilter) {
+  if (!hideCollectionsFilter?.enabled) return true;
+  return !videoData.isCollection;
+}
+
+function passesLiveFilter(videoData, hideLiveFilter) {
+  if (!hideLiveFilter?.enabled) return true;
+  return !videoData.isLive;
 }
 
 export function shouldHide(videoData, activeFilters) {
@@ -71,7 +81,9 @@ export function shouldHide(videoData, activeFilters) {
     passesAgeFilter(videoData, activeFilters.age) &&
     passesDurationFilter(videoData, activeFilters.duration) &&
     passesViewsFilter(videoData, activeFilters.views) &&
-    passesShortsFilter(videoData, activeFilters.hideShorts);
+    passesShortsFilter(videoData, activeFilters.hideShorts) &&
+    passesCollectionsFilter(videoData, activeFilters.hideCollections) &&
+    passesLiveFilter(videoData, activeFilters.hideLive);
 
   return !passesAllFilters;
 }

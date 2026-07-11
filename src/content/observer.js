@@ -1,34 +1,75 @@
-import { VIDEO_GRID_CONTAINER, VIDEO_ITEM } from './selectors.js';
+import { VIDEO_GRID_CONTAINER, VIDEO_ITEM, SHORTS_SHELF, SHORTS_LOCKUP } from './selectors.js';
 import { extractVideoData } from './extractors.js';
 import { shouldHide } from './filters.js';
-import { getFilters, setFilters, onFiltersChanged } from '../shared/storage.js';
+import { getFilters, onFiltersChanged } from '../shared/storage.js';
+import { startAutoScroll, stopAutoScroll, scheduleNudgeCheck } from './autoScroll.js';
 
 let currentFilters = null;
+let gridObserver = null;
+let bodyObserver = null;
+let unsubscribeFilters = null;
+
+// O conteúdo de um vídeo já renderizado não muda — extrair os dados (várias
+// consultas ao DOM) só é preciso uma vez por item, não a cada mudança de filtro.
+const videoDataCache = new WeakMap();
+
+function getOrExtractVideoData(videoEl) {
+  if (videoDataCache.has(videoEl)) return videoDataCache.get(videoEl);
+  const videoData = extractVideoData(videoEl);
+  videoDataCache.set(videoEl, videoData);
+  return videoData;
+}
 
 function applyFilter(videoEl) {
-  const videoData = extractVideoData(videoEl);
+  const videoData = getOrExtractVideoData(videoEl);
   if (!videoData) return; // Mix, anúncio, ou outro tipo de cartão — nunca mexer.
 
   const hide = shouldHide(videoData, currentFilters);
   videoEl.style.display = hide ? 'none' : '';
 }
 
+// A prateleira de Shorts tem o seu próprio título/cabeçalho ("Shorts") fora dos
+// itens em si — escondê-los um a um deixava o título visível sozinho. Aqui
+// escondemos a prateleira inteira quando é mesmo uma prateleira de Shorts.
+function applyShelfFilter(shelfEl) {
+  if (!shelfEl.querySelector(SHORTS_LOCKUP)) return; // não é uma prateleira de Shorts, não mexer.
+  const hide = Boolean(currentFilters?.hideShorts?.enabled);
+  shelfEl.style.display = hide ? 'none' : '';
+}
+
 function handleAddedNode(node) {
   if (node.nodeType !== Node.ELEMENT_NODE) return;
+
   if (node.matches(VIDEO_ITEM)) applyFilter(node);
   node.querySelectorAll(VIDEO_ITEM).forEach(applyFilter);
+
+  if (node.matches(SHORTS_SHELF)) applyShelfFilter(node);
+  node.querySelectorAll(SHORTS_SHELF).forEach(applyShelfFilter);
+}
+
+// Mudar um filtro esconde/mostra vídeos por toda a grid — em vez de deixar o
+// utilizador algures a meio de um resultado potencialmente muito diferente,
+// volta sempre ao topo (suave), como "recomeçar a ver" com o novo filtro.
+function applyAllFilters() {
+  document.querySelectorAll(VIDEO_ITEM).forEach(applyFilter);
+  document.querySelectorAll(SHORTS_SHELF).forEach(applyShelfFilter);
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  scheduleNudgeCheck();
 }
 
 function watchGrid(grid) {
   grid.querySelectorAll(VIDEO_ITEM).forEach(applyFilter);
+  grid.querySelectorAll(SHORTS_SHELF).forEach(applyShelfFilter);
 
-  const observer = new MutationObserver((mutations) => {
+  gridObserver = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       mutation.addedNodes.forEach(handleAddedNode);
     }
+    scheduleNudgeCheck();
   });
 
-  observer.observe(grid, { childList: true, subtree: true });
+  gridObserver.observe(grid, { childList: true, subtree: true });
 }
 
 function waitForGrid() {
@@ -39,30 +80,15 @@ function waitForGrid() {
   }
 
   console.log('[yt-filter] Grid ainda não está no DOM, a vigiar...');
-  const bodyObserver = new MutationObserver(() => {
+  bodyObserver = new MutationObserver(() => {
     const grid = document.querySelector(VIDEO_GRID_CONTAINER);
     if (grid) {
       bodyObserver.disconnect();
+      bodyObserver = null;
       watchGrid(grid);
     }
   });
   bodyObserver.observe(document.body, { childList: true, subtree: true });
-}
-
-// TEMPORÁRIO — só para testar filtros manualmente na consola normal da página
-// antes de existir popup/options (Sessão 5). Remover quando a UI real estiver pronta.
-function exposeDebugBridge() {
-  if (typeof exportFunction !== 'function' || typeof cloneInto !== 'function') return;
-
-  window.wrappedJSObject.ytFilterDebugSetFilters = exportFunction((filters) => {
-    setFilters(filters);
-  }, window);
-
-  window.wrappedJSObject.ytFilterDebugGetFilters = exportFunction(() => {
-    return getFilters().then((filters) => cloneInto(filters, window));
-  }, window);
-
-  console.log('[yt-filter] Debug: usa ytFilterDebugSetFilters({...}) e ytFilterDebugGetFilters() nesta consola.');
 }
 
 // Carrega os filtros antes de começar a vigiar, para nunca decidir esconder/mostrar
@@ -70,11 +96,32 @@ function exposeDebugBridge() {
 export async function start() {
   currentFilters = await getFilters();
 
-  onFiltersChanged((newFilters) => {
+  unsubscribeFilters = onFiltersChanged((newFilters) => {
     currentFilters = newFilters;
-    document.querySelectorAll(VIDEO_ITEM).forEach(applyFilter);
+    applyAllFilters();
   });
 
+  startAutoScroll();
   waitForGrid();
-  exposeDebugBridge();
+}
+
+// Desliga tudo (observers, subscrição de filtros) e repõe os vídeos visíveis.
+// Chamado ao navegar para fora da homepage ou quando a extensão é recarregada,
+// para nunca deixar uma instância antiga a correr ao lado de uma nova.
+export function stop() {
+  stopAutoScroll();
+  gridObserver?.disconnect();
+  gridObserver = null;
+  bodyObserver?.disconnect();
+  bodyObserver = null;
+  unsubscribeFilters?.();
+  unsubscribeFilters = null;
+  currentFilters = null;
+
+  document.querySelectorAll(VIDEO_ITEM).forEach((el) => {
+    el.style.display = '';
+  });
+  document.querySelectorAll(SHORTS_SHELF).forEach((el) => {
+    el.style.display = '';
+  });
 }
