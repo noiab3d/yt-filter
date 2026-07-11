@@ -5,3 +5,7 @@ web-ext-artifacts/
 
 CLAUDE.md
 .claude/
+
+# Dumps de HTML da página inteira usados como referência local (podem conter
+# recomendações/dados pessoais) — fixtures pequenos e intencionais vão em tests/fixtures/.
+/*.html
