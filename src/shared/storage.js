@@ -52,3 +52,17 @@ export async function getInstalledAt() {
   await browser.storage.local.set({ [INSTALLED_AT_KEY]: now });
   return now;
 }
+
+const BUTTON_POSITION_KEY = 'buttonPosition';
+
+// Posição do botão in-page depois de o utilizador o arrastar: { side: 'left' | 'right', top }.
+// null até à primeira vez que é arrastado — nesse caso usa-se a posição por defeito
+// (encostado à direita, por baixo da chip bar).
+export async function getButtonPosition() {
+  const stored = await browser.storage.local.get(BUTTON_POSITION_KEY);
+  return stored[BUTTON_POSITION_KEY] ?? null;
+}
+
+export async function setButtonPosition(position) {
+  await browser.storage.local.set({ [BUTTON_POSITION_KEY]: position });
+}
