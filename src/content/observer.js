@@ -13,16 +13,36 @@ let unsubscribeFilters = null;
 // consultas ao DOM) só é preciso uma vez por item, não a cada mudança de filtro.
 const videoDataCache = new WeakMap();
 
+// Nunca guarda `null` em cache: o YouTube por vezes ainda não acabou de
+// renderizar o badge de Mix/Live ou a linha de metadata no instante exato em
+// que o cartão aparece no DOM (assíncrono, separado da inserção do próprio
+// elemento). Se guardássemos esse `null` transitório, o vídeo ficava preso
+// visível para sempre — o código nunca mais tentava reextrair. Sem cache no
+// `null`, a próxima chamada (nova mutação do grid, ou mudança de filtro que
+// corre applyAllFilters) tenta outra vez, e por essa altura o DOM já assentou.
 function getOrExtractVideoData(videoEl) {
-  if (videoDataCache.has(videoEl)) return videoDataCache.get(videoEl);
+  const cached = videoDataCache.get(videoEl);
+  if (cached) return cached;
   const videoData = extractVideoData(videoEl);
-  videoDataCache.set(videoEl, videoData);
+  if (videoData) videoDataCache.set(videoEl, videoData);
   return videoData;
 }
 
+const RETRY_DELAY_MS = 1000;
+// Uma tentativa extra por elemento chega — se ainda falhar depois de 1s, é
+// mesmo um anúncio ou outro cartão desconhecido (extractVideoData() devolve
+// null de propósito para esses, não é um erro de timing).
+const retriedElements = new WeakSet();
+
 function applyFilter(videoEl) {
   const videoData = getOrExtractVideoData(videoEl);
-  if (!videoData) return; // Mix, anúncio, ou outro tipo de cartão — nunca mexer.
+  if (!videoData) {
+    if (!retriedElements.has(videoEl)) {
+      retriedElements.add(videoEl);
+      setTimeout(() => applyFilter(videoEl), RETRY_DELAY_MS);
+    }
+    return; // Mix/live ainda a renderizar, anúncio, ou outro cartão desconhecido — nunca mexer.
+  }
 
   const hide = shouldHide(videoData, currentFilters);
   videoEl.style.display = hide ? 'none' : '';
