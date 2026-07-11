@@ -1,13 +1,18 @@
 import { getFilters, setFilters, onFiltersChanged } from './storage.js';
 import { DEFAULT_FILTERS } from './defaults.js';
+import { strings } from '../locales/pt.js';
 
-const TEMPLATE = `
-  <button type="button" class="ytf-reset-all" data-widget="reset-all">Desativar todos os filtros</button>
+// Único sítio que sabe montar o HTML do painel a partir do dicionário de
+// strings — trocar de idioma no futuro não deve exigir tocar aqui, só no
+// ficheiro em src/locales/.
+function buildTemplate(t) {
+  return `
+  <button type="button" class="ytf-reset-all" data-widget="reset-all">${t.panel.resetAll}</button>
 
   <section class="ytf-filter" data-filter="age">
     <label class="ytf-filter-header">
       <input type="checkbox" data-field="age.enabled" />
-      <span>Idade do vídeo</span>
+      <span>${t.panel.age.title}</span>
     </label>
     <div class="ytf-filter-body">
       <div class="ytf-chips" data-widget="age-chips"></div>
@@ -15,19 +20,19 @@ const TEMPLATE = `
         <div class="ytf-chips" data-widget="age-comparison-chips"></div>
         <div data-widget="age-calendar" class="ytf-calendar"></div>
       </div>
-      <p class="ytf-hint">Aproximado — o YouTube só indica datas relativas ("há 3 dias").</p>
+      <p class="ytf-hint">${t.panel.age.hint}</p>
     </div>
   </section>
 
   <section class="ytf-filter" data-filter="duration">
     <label class="ytf-filter-header">
       <input type="checkbox" data-field="duration.enabled" />
-      <span>Duração do vídeo</span>
+      <span>${t.panel.duration.title}</span>
     </label>
     <div class="ytf-filter-body">
       <div class="ytf-chips" data-widget="duration-chips"></div>
       <label class="ytf-row">
-        <span>Minutos</span>
+        <span>${t.panel.duration.minutesLabel}</span>
         <input
           type="number"
           min="0"
@@ -35,7 +40,7 @@ const TEMPLATE = `
           inputmode="numeric"
           pattern="[0-9]*"
           data-field="duration.minutes"
-          placeholder="ex. 15"
+          placeholder="${t.panel.duration.minutesPlaceholder}"
         />
       </label>
     </div>
@@ -44,7 +49,7 @@ const TEMPLATE = `
   <section class="ytf-filter" data-filter="views">
     <label class="ytf-filter-header">
       <input type="checkbox" data-field="views.enabled" />
-      <span>Views</span>
+      <span>${t.panel.views.title}</span>
     </label>
     <div class="ytf-filter-body">
       <div data-widget="views-slider" class="ytf-slider"></div>
@@ -54,24 +59,25 @@ const TEMPLATE = `
   <section class="ytf-filter" data-filter="hideShorts">
     <label class="ytf-filter-header">
       <input type="checkbox" data-field="hideShorts.enabled" />
-      <span>Esconder Shorts</span>
+      <span>${t.panel.hideShorts}</span>
     </label>
   </section>
 
   <section class="ytf-filter">
-    <div class="ytf-filter-title">Outros</div>
+    <div class="ytf-filter-title">${t.panel.other.title}</div>
     <div class="ytf-filter-body">
       <label class="ytf-toggle-row">
         <input type="checkbox" data-field="hideCollections.enabled" />
-        <span>Esconder Mixes e playlists</span>
+        <span>${t.panel.other.hideCollections}</span>
       </label>
       <label class="ytf-toggle-row">
         <input type="checkbox" data-field="hideLive.enabled" />
-        <span>Esconder lives</span>
+        <span>${t.panel.other.hideLive}</span>
       </label>
     </div>
   </section>
 `;
+}
 
 function getPath(obj, path) {
   return path.split('.').reduce((value, key) => value?.[key], obj);
@@ -119,11 +125,8 @@ function createChipGroup(container, { options, onSelect }) {
   };
 }
 
-const WEEKDAY_LABELS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
-const MONTH_LABELS = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
-];
+const WEEKDAY_LABELS = strings.calendar.weekdays;
+const MONTH_LABELS = strings.calendar.months;
 
 function toDateValue(date) {
   const y = date.getFullYear();
@@ -252,11 +255,11 @@ function createViewsSlider(container, { onChange }) {
   const minHandle = document.createElement('button');
   minHandle.type = 'button';
   minHandle.className = 'ytf-slider-handle';
-  minHandle.setAttribute('aria-label', 'Views mínimas');
+  minHandle.setAttribute('aria-label', strings.panel.views.minAriaLabel);
   const maxHandle = document.createElement('button');
   maxHandle.type = 'button';
   maxHandle.className = 'ytf-slider-handle';
-  maxHandle.setAttribute('aria-label', 'Views máximas');
+  maxHandle.setAttribute('aria-label', strings.panel.views.maxAriaLabel);
   track.append(range, minHandle, maxHandle);
 
   const labels = document.createElement('div');
@@ -350,7 +353,7 @@ function fillGenericFields(container, filters) {
 
 // Monta o painel de filtros dentro de `container`. Devolve uma função de limpeza.
 export function mountFilterPanel(container) {
-  container.innerHTML = TEMPLATE;
+  container.innerHTML = buildTemplate(strings);
 
   let currentFilters = null;
   let debounceTimer = null;
@@ -388,10 +391,10 @@ export function mountFilterPanel(container) {
 
   const ageChips = createChipGroup(container.querySelector('[data-widget="age-chips"]'), {
     options: [
-      { value: 'lessThan1Day', label: '< 1 dia' },
-      { value: 'lessThan5Days', label: '< 5 dias' },
-      { value: 'moreThan10Days', label: '> 10 dias' },
-      { value: 'custom', label: 'Personalizado' },
+      { value: 'lessThan1Day', label: strings.panel.age.presets.lessThan1Day },
+      { value: 'lessThan5Days', label: strings.panel.age.presets.lessThan5Days },
+      { value: 'moreThan10Days', label: strings.panel.age.presets.moreThan10Days },
+      { value: 'custom', label: strings.panel.age.presets.custom },
     ],
     onSelect: (value) =>
       commit((filters) => {
@@ -406,8 +409,8 @@ export function mountFilterPanel(container) {
 
   const ageComparisonChips = createChipGroup(container.querySelector('[data-widget="age-comparison-chips"]'), {
     options: [
-      { value: 'before', label: 'Antes de' },
-      { value: 'after', label: 'Depois de' },
+      { value: 'before', label: strings.panel.age.comparison.before },
+      { value: 'after', label: strings.panel.age.comparison.after },
     ],
     onSelect: (value) =>
       commit((filters) => {
@@ -424,8 +427,8 @@ export function mountFilterPanel(container) {
 
   const durationChips = createChipGroup(container.querySelector('[data-widget="duration-chips"]'), {
     options: [
-      { value: 'lessThan', label: '−' },
-      { value: 'moreThan', label: '+' },
+      { value: 'lessThan', label: strings.panel.duration.lessThan },
+      { value: 'moreThan', label: strings.panel.duration.moreThan },
     ],
     onSelect: (value) =>
       commit((filters) => {
