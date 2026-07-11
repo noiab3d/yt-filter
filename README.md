@@ -9,9 +9,6 @@ algoritmo de recomendação do YouTube.
 Não é um bloqueador de anúncios — a extensão nunca toca em anúncios,
 nunca os deteta nem os esconde.
 
-## Capturas
-
-<!-- TODO: screenshot do painel de filtros aberto -->
 ![Screenshot do YT Filter](docs/screenshot_live.png)
 
 ## Funcionalidades
