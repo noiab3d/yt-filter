@@ -2,81 +2,103 @@ import { getFilters, setFilters, onFiltersChanged } from './storage.js';
 import { DEFAULT_FILTERS } from './defaults.js';
 import { strings } from '../locales/index.js';
 
-// Único sítio que sabe montar o HTML do painel a partir do dicionário de
-// strings — trocar de idioma no futuro não deve exigir tocar aqui, só no
+// Construção DOM manual em vez de innerHTML — o web-ext lint (AMO) acusa
+// UNSAFE_VAR_ASSIGNMENT em qualquer innerHTML com conteúdo interpolado,
+// mesmo sendo sempre estático (vem só de locales/, nunca de dados do
+// utilizador). Assim evita-se o aviso na revisão sem mudar comportamento.
+function createElement(tag, attrs = {}, children = []) {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(attrs)) {
+    node.setAttribute(key, value);
+  }
+  for (const child of children) {
+    node.appendChild(typeof child === 'string' ? document.createTextNode(child) : child);
+  }
+  return node;
+}
+
+// Único sítio que sabe montar a estrutura do painel a partir do dicionário
+// de strings — trocar de idioma no futuro não deve exigir tocar aqui, só no
 // ficheiro em src/locales/.
 function buildTemplate(t) {
-  return `
-  <button type="button" class="ytf-reset-all" data-widget="reset-all">${t.panel.resetAll}</button>
+  const fragment = document.createDocumentFragment();
 
-  <section class="ytf-filter" data-filter="age">
-    <label class="ytf-filter-header">
-      <input type="checkbox" data-field="age.enabled" />
-      <span>${t.panel.age.title}</span>
-    </label>
-    <div class="ytf-filter-body">
-      <div class="ytf-chips" data-widget="age-chips"></div>
-      <div data-widget="age-custom" class="ytf-age-custom">
-        <div class="ytf-chips" data-widget="age-comparison-chips"></div>
-        <div data-widget="age-calendar" class="ytf-calendar"></div>
-      </div>
-      <p class="ytf-hint">${t.panel.age.hint}</p>
-    </div>
-  </section>
+  const resetAllButton = createElement(
+    'button',
+    { type: 'button', class: 'ytf-reset-all', 'data-widget': 'reset-all' },
+    [t.panel.resetAll],
+  );
 
-  <section class="ytf-filter" data-filter="duration">
-    <label class="ytf-filter-header">
-      <input type="checkbox" data-field="duration.enabled" />
-      <span>${t.panel.duration.title}</span>
-    </label>
-    <div class="ytf-filter-body">
-      <div class="ytf-chips" data-widget="duration-chips"></div>
-      <label class="ytf-row">
-        <span>${t.panel.duration.minutesLabel}</span>
-        <input
-          type="number"
-          min="0"
-          step="1"
-          inputmode="numeric"
-          pattern="[0-9]*"
-          data-field="duration.minutes"
-          placeholder="${t.panel.duration.minutesPlaceholder}"
-        />
-      </label>
-    </div>
-  </section>
+  const ageSection = createElement('section', { class: 'ytf-filter', 'data-filter': 'age' }, [
+    createElement('label', { class: 'ytf-filter-header' }, [
+      createElement('input', { type: 'checkbox', 'data-field': 'age.enabled' }),
+      createElement('span', {}, [t.panel.age.title]),
+    ]),
+    createElement('div', { class: 'ytf-filter-body' }, [
+      createElement('div', { class: 'ytf-chips', 'data-widget': 'age-chips' }),
+      createElement('div', { 'data-widget': 'age-custom', class: 'ytf-age-custom' }, [
+        createElement('div', { class: 'ytf-chips', 'data-widget': 'age-comparison-chips' }),
+        createElement('div', { 'data-widget': 'age-calendar', class: 'ytf-calendar' }),
+      ]),
+      createElement('p', { class: 'ytf-hint' }, [t.panel.age.hint]),
+    ]),
+  ]);
 
-  <section class="ytf-filter" data-filter="views">
-    <label class="ytf-filter-header">
-      <input type="checkbox" data-field="views.enabled" />
-      <span>${t.panel.views.title}</span>
-    </label>
-    <div class="ytf-filter-body">
-      <div data-widget="views-slider" class="ytf-slider"></div>
-    </div>
-  </section>
+  const durationSection = createElement('section', { class: 'ytf-filter', 'data-filter': 'duration' }, [
+    createElement('label', { class: 'ytf-filter-header' }, [
+      createElement('input', { type: 'checkbox', 'data-field': 'duration.enabled' }),
+      createElement('span', {}, [t.panel.duration.title]),
+    ]),
+    createElement('div', { class: 'ytf-filter-body' }, [
+      createElement('div', { class: 'ytf-chips', 'data-widget': 'duration-chips' }),
+      createElement('label', { class: 'ytf-row' }, [
+        createElement('span', {}, [t.panel.duration.minutesLabel]),
+        createElement('input', {
+          type: 'number',
+          min: '0',
+          step: '1',
+          inputmode: 'numeric',
+          pattern: '[0-9]*',
+          'data-field': 'duration.minutes',
+          placeholder: t.panel.duration.minutesPlaceholder,
+        }),
+      ]),
+    ]),
+  ]);
 
-  <section class="ytf-filter" data-filter="hideShorts">
-    <label class="ytf-filter-header">
-      <input type="checkbox" data-field="hideShorts.enabled" />
-      <span>${t.panel.hideShorts}</span>
-    </label>
-  </section>
+  const viewsSection = createElement('section', { class: 'ytf-filter', 'data-filter': 'views' }, [
+    createElement('label', { class: 'ytf-filter-header' }, [
+      createElement('input', { type: 'checkbox', 'data-field': 'views.enabled' }),
+      createElement('span', {}, [t.panel.views.title]),
+    ]),
+    createElement('div', { class: 'ytf-filter-body' }, [
+      createElement('div', { 'data-widget': 'views-slider', class: 'ytf-slider' }),
+    ]),
+  ]);
 
-  <section class="ytf-filter">
-    <div class="ytf-filter-title">${t.panel.other.title}</div>
-    <div class="ytf-filter-body">
-      <label class="ytf-toggle-row">
-        <input type="checkbox" data-field="hideCollections.enabled" />
-        <span>${t.panel.other.hideCollections}</span>
-      </label>
-      <label class="ytf-toggle-row">
-        <input type="checkbox" data-field="hideLive.enabled" />
-        <span>${t.panel.other.hideLive}</span>
-      </label>
-    </div>
-  </section>
-`;
+  const hideShortsSection = createElement('section', { class: 'ytf-filter', 'data-filter': 'hideShorts' }, [
+    createElement('label', { class: 'ytf-filter-header' }, [
+      createElement('input', { type: 'checkbox', 'data-field': 'hideShorts.enabled' }),
+      createElement('span', {}, [t.panel.hideShorts]),
+    ]),
+  ]);
+
+  const otherSection = createElement('section', { class: 'ytf-filter' }, [
+    createElement('div', { class: 'ytf-filter-title' }, [t.panel.other.title]),
+    createElement('div', { class: 'ytf-filter-body' }, [
+      createElement('label', { class: 'ytf-toggle-row' }, [
+        createElement('input', { type: 'checkbox', 'data-field': 'hideCollections.enabled' }),
+        createElement('span', {}, [t.panel.other.hideCollections]),
+      ]),
+      createElement('label', { class: 'ytf-toggle-row' }, [
+        createElement('input', { type: 'checkbox', 'data-field': 'hideLive.enabled' }),
+        createElement('span', {}, [t.panel.other.hideLive]),
+      ]),
+    ]),
+  ]);
+
+  fragment.append(resetAllButton, ageSection, durationSection, viewsSection, hideShortsSection, otherSection);
+  return fragment;
 }
 
 function getPath(obj, path) {
@@ -172,7 +194,7 @@ function createCalendar(container, { onSelect }) {
 
   function renderGrid() {
     label.textContent = `${MONTH_LABELS[viewDate.getMonth()]} ${viewDate.getFullYear()}`;
-    grid.innerHTML = '';
+    grid.replaceChildren();
 
     const firstWeekday = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay();
     const daysInMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
@@ -353,7 +375,7 @@ function fillGenericFields(container, filters) {
 
 // Monta o painel de filtros dentro de `container`. Devolve uma função de limpeza.
 export function mountFilterPanel(container) {
-  container.innerHTML = buildTemplate(strings);
+  container.replaceChildren(buildTemplate(strings));
 
   let currentFilters = null;
   let debounceTimer = null;
