@@ -44,8 +44,8 @@ for full details.
 
 ## Installation
 
-The extension isn't published on [addons.mozilla.org](https://addons.mozilla.org)
-or the Chrome Web Store yet. Coming soon.
+The extension is published on [addons.mozilla.org]( https://addons.mozilla.org/addon/yt-filter/) only, for now.
+It will be available on Chrome Web Store soon.
 
 ## Contributing
 
